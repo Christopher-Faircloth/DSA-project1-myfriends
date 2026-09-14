@@ -8,6 +8,7 @@ Notes:
 - you should create and test your own scenarios to fully test your functions, 
   including testing of "edge cases"
 """
+from collections import deque
 
 from py_friends.friends import Friends
 
@@ -42,8 +43,9 @@ def load_pairs(filename):
 
 # ------------ BEGIN YOUR CODE ------------
 
-        
-        pass    # implement your code here
+        for line in infile:
+            names = tuple(line.strip().split(" "))
+            list_of_pairs.append(names)
 
 
 # ------------ END YOUR CODE ------------
@@ -71,8 +73,16 @@ def make_friends_directory(pairs):
     # ------------ BEGIN YOUR CODE ------------
 
     
-    pass    # implement your code here
-
+    for pair in pairs:
+        firstName = pair[0]
+        secondName = pair[1]
+        if firstName != secondName:
+            if firstName not in directory:
+                directory[firstName] = set()
+            if secondName not in directory:
+                directory[secondName] = set()
+            directory[firstName].add(secondName)
+            directory[secondName].add(firstName)
 
     # ------------ END YOUR CODE ------------
 
@@ -90,8 +100,10 @@ def find_all_number_of_friends(my_dir):
 
     # ------------ BEGIN YOUR CODE ------------
 
+    for person, friends in my_dir.items():
+        friends_list.append((person, len(friends)))
 
-    pass    # implement your code here
+    friends_list.sort(key=lambda x: (-x[1], x[0]))
     
 
     # ------------ END YOUR CODE ------------
@@ -121,9 +133,21 @@ def make_team_roster(person, my_dir):
     label = person
 
     # ------------ BEGIN YOUR CODE ------------
+    #add all the friends and freinds of freinds to the list,
+    #sort the set, then add them to the string
+    visitedFriends = []
+    for friend in my_dir[person]:
+        if friend not in visitedFriends:
+            visitedFriends.append(friend)
+        for friendOfFriend in my_dir[friend]:
+            if friendOfFriend != person:
+                if friendOfFriend not in visitedFriends:
+                    visitedFriends.append(friendOfFriend)
 
-    
-    pass    # implement your code here
+    visitedFriends.sort()
+    for firend in visitedFriends:
+        label += "_" + firend
+
 
 
     # ------------ END YOUR CODE ------------
@@ -138,11 +162,39 @@ def find_smallest_team(my_dir):
     smallest_teams = []
 
     # ------------ BEGIN YOUR CODE
+    '''
+        my plan:
+    loop through the entire dictionary, backwards (this can make it faster)
+    add team members to the set and check for the length of the set
+    if the length of the current is less then the current min replace
+    the min leader with current person, if there is a tie check who's
+    name is first in ASCII
+    '''
+    teamRoaster = set()
+    minLeader = ""
+    minLength = float('inf')
+    for person in reversed(my_dir):
+        #only checks if the original friends list isnt more than the current min
+        if len(my_dir[person]) < minLength:
+            for friend in my_dir[person]:
+                if friend not in teamRoaster:
+                    teamRoaster.add(friend)
+                for friendOfFriend in my_dir[friend]:
+                    if friendOfFriend not in teamRoaster:
+                        teamRoaster.add(friendOfFriend)
+            if minLeader == "": #if its the first person
+                minLeader = person
+                minLength = len(teamRoaster)
+            elif minLength > len(teamRoaster): #if the length of the team is the new min
+                minLeader = person
+                minLength = len(teamRoaster)
+            elif minLength == len(teamRoaster): # if they equal
+                if minLeader > person: # check for alphabetical
+                    minLeader = person
+                    minLength = len(teamRoaster)
+    if minLeader != "":
+        smallest_teams.append(make_team_roster(minLeader, my_dir))
 
-
-    pass    # implement your code here
-
-    
     # ------------ END YOUR CODE
 
     return smallest_teams[0] if smallest_teams else ""
